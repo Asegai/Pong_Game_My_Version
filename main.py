@@ -9,8 +9,12 @@ class class_Test(App):
 
         label = Label(text='Hello the World', size_hint=(1, 0.8))  
         
-        button_layout = BoxLayout(orientation='horizontal', size_hint=(1, 0.02)) 
+        button_layout = BoxLayout(orientation='horizontal', size_hint=(1, None)) 
         
+        # the button isn't centered
+        #! Center button!
+    
+
         button = Button(text='World', size_hint=(None, None), size=(100, 50))
 
         button_layout.add_widget(BoxLayout())  
