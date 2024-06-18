@@ -139,8 +139,12 @@ class PongGame(Widget):
             self.player2.center_y -= min(self.player2.center_y - self.ball.center_y, 4)
 
     def on_touch_move(self, touch):
-        if touch.x < self.width / 3:
-            self.player1.center_y = touch.y
+        if self.player1.x < self.width / 2:  
+            if touch.x < self.width / 3:
+                self.player1.center_y = touch.y
+        else:  
+            if touch.x > self.width * 2 / 3:
+                self.player1.center_y = touch.y
 
     def check_for_star(self):
         if (self.player1.score % 5 == 0 or self.player2.score % 5 == 0) and (self.player1.score > 0 or self.player2.score > 0):
