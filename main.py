@@ -1,4 +1,5 @@
 from kivy.app import App
+from kivy.graphics import Color
 from kivy.uix.widget import Widget
 from kivy.uix.label import Label
 from kivy.uix.button import Button
@@ -9,6 +10,7 @@ from kivy.vector import Vector
 from kivy.clock import Clock
 from kivy.animation import Animation
 from kivy.lang import Builder
+from kivy.properties import ListProperty
 
 star_image_path = "C:/Users/aesas/Desktop/app_test_2/star.png"
 explosion_image_path = "C:/Users/aesas/Desktop/app_test_2/explosion.png"
@@ -22,8 +24,11 @@ Builder.load_string(f'''
             size: self.size
 
 <PongPaddle>:
+    color: 1, 1, 1, 1
     size: 25, 200
     canvas:
+        Color:
+            rgba: self.color
         Rectangle:
             pos: self.pos
             size: self.size
@@ -77,6 +82,12 @@ class PongBall(Widget):
 
 class PongPaddle(Widget):
     score = NumericProperty(0)
+    color = ListProperty([1, 1, 1, 1])
+    def flash_color(self):
+        anim = Animation(color=[1, 0, 0, 1]) + Animation(color=[0, 1, 0, 1]) + Animation(color=[0, 0, 1, 1])
+        anim.repeat = True
+        anim.start(self)
+
 
     def bounce_ball(self, ball):
         if self.collide_widget(ball):
@@ -194,6 +205,7 @@ class MainMenu(RelativeLayout):
     def start_game(self, instance):
         self.clear_widgets()
         self.game = PongGame()
+        self.game.player1.flash_color()  
         self.add_widget(self.game)
         self.game.serve_ball()
         Clock.schedule_interval(self.game.update, 1.0 / 60.0)
