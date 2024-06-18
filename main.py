@@ -59,10 +59,16 @@ Builder.load_string(f'''
 
     Label:
         id: player1_score_label
-        text: str(root.player1.score)
+        text: str(root.user_score)
         font_size: 30
         center_x: root.width / 4
         top: root.top - 10
+
+    Label:
+        text: 'You'
+        font_size: 20
+        center_x: root.width / 4
+        y: player1_score_label.y - player1_score_label.height
 
     Label:
         id: player2_score_label
@@ -70,8 +76,14 @@ Builder.load_string(f'''
         font_size: 30
         center_x: root.width * 3 / 4
         top: root.top - 10
-''')
 
+    Label:
+        text: 'Opponent'
+        font_size: 20
+        center_x: root.width * 3 / 4
+        y: player2_score_label.y - player2_score_label.height
+        
+''')
 class PongBall(Widget):
     velocity_x = NumericProperty(0)
     velocity_y = NumericProperty(0)
@@ -108,6 +120,7 @@ class RainbowStar(Image):
             self.star_image = False
 
 class PongGame(Widget):
+    user_score = NumericProperty(0)
     ball = ObjectProperty(None)
     player1 = ObjectProperty(None)
     player2 = ObjectProperty(None)
@@ -122,28 +135,35 @@ class PongGame(Widget):
     def update(self, dt):
         self.ball.move()
 
-        # bounce off paddles
+         
         self.player1.bounce_ball(self.ball)
         self.player2.bounce_ball(self.ball)
 
-        # bounce off top and bottom
+       
         if (self.ball.y < 0) or (self.ball.top > self.height):
             self.ball.velocity_y *= -1
 
         
         if self.ball.x < 0:
             self.player2.score += 1
-            self.check_for_star()
             self.serve_ball(vel=(4, 0))
+            self.check_for_star()
+
+       
         if self.ball.right > self.width:
             self.player1.score += 1
-            self.check_for_star()
             self.serve_ball(vel=(-4, 0))
+            self.check_for_star()
 
-        self.player1_score.text = str(self.player1.score)
-        self.player2_score.text = str(self.player2.score)
+       
+        if self.player1.x > self.player2.x:
+            self.player1_score.text = str(self.player2.score)
+            self.player2_score.text = str(self.player1.score)
+        else:
+            self.player1_score.text = str(self.player1.score)
+            self.player2_score.text = str(self.player2.score)
 
-        # AI for the right paddle
+       
         if self.ball.center_y > self.player2.center_y:
             self.player2.center_y += min(self.ball.center_y - self.player2.center_y, 4)
         if self.ball.center_y < self.player2.center_y:
@@ -158,7 +178,7 @@ class PongGame(Widget):
                 self.player1.center_y = touch.y
 
     def check_for_star(self):
-        if (self.player1.score % 5 == 0 or self.player2.score % 5 == 0) and (self.player1.score > 0 or self.player2.score > 0):
+        if (self.player1.score + self.player2.score) % 5 == 0 and (self.player1.score >= 0 or self.player2.score >= 0):
             self.spawn_star()
 
     def spawn_star(self):
@@ -189,6 +209,13 @@ class PongGame(Widget):
     def swap_sides(self):
         self.player1.x, self.player2.x = self.player2.x, self.player1.x
         self.player1.center_y, self.player2.center_y = self.player2.center_y, self.player1.center_y
+
+       
+        self.player1.score, self.player2.score = self.player2.score, self.player1.score
+
+       
+        self.player1_score.text = str(self.player1.score)
+        self.player2_score.text = str(self.player2.score)
 
 class MainMenu(RelativeLayout):
     def __init__(self, **kwargs):
