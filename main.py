@@ -2,14 +2,18 @@ from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.uix.label import Label
 from kivy.uix.button import Button
+from kivy.uix.image import Image
 from kivy.uix.relativelayout import RelativeLayout
 from kivy.properties import NumericProperty, ReferenceListProperty, ObjectProperty
 from kivy.vector import Vector
 from kivy.clock import Clock
+from kivy.animation import Animation
 from kivy.lang import Builder
-import random
 
-Builder.load_string('''
+star_image_path = "C:/Users/aesas/Desktop/app_test_2/star.png"
+explosion_image_path = "C:/Users/aesas/Desktop/app_test_2/explosion.png"
+
+Builder.load_string(f'''
 <PongBall>:
     size: 50, 50
     canvas:
@@ -23,6 +27,9 @@ Builder.load_string('''
         Rectangle:
             pos: self.pos
             size: self.size
+
+<RainbowStar>:
+    source: '{star_image_path}'
 
 <PongGame>:
     ball: pong_ball
@@ -79,12 +86,23 @@ class PongPaddle(Widget):
             vel = bounced * 1.1
             ball.velocity = vel.x, vel.y + offset
 
+class RainbowStar(Image):
+    def __init__(self, **kwargs):
+        super(RainbowStar, self).__init__(**kwargs)
+        self.star_image = True
+
+    def update_image(self, *args):
+        if self.star_image and self.center_y <= self.parent.height / 2:
+            self.source = explosion_image_path
+            self.star_image = False
+
 class PongGame(Widget):
     ball = ObjectProperty(None)
     player1 = ObjectProperty(None)
     player2 = ObjectProperty(None)
     player1_score = ObjectProperty(None)
     player2_score = ObjectProperty(None)
+    star = None
 
     def serve_ball(self, vel=(4, 0)):
         self.ball.center = self.center
@@ -101,12 +119,14 @@ class PongGame(Widget):
         if (self.ball.y < 0) or (self.ball.top > self.height):
             self.ball.velocity_y *= -1
 
-        # went off to a side to score point?
+        
         if self.ball.x < 0:
             self.player2.score += 1
+            self.check_for_star()
             self.serve_ball(vel=(4, 0))
         if self.ball.right > self.width:
             self.player1.score += 1
+            self.check_for_star()
             self.serve_ball(vel=(-4, 0))
 
         self.player1_score.text = str(self.player1.score)
@@ -121,6 +141,39 @@ class PongGame(Widget):
     def on_touch_move(self, touch):
         if touch.x < self.width / 3:
             self.player1.center_y = touch.y
+
+    def check_for_star(self):
+        if (self.player1.score % 5 == 0 or self.player2.score % 5 == 0) and (self.player1.score > 0 or self.player2.score > 0):
+            self.spawn_star()
+
+    def spawn_star(self):
+        if not self.star:
+            self.star = RainbowStar()
+            self.add_widget(self.star)
+            self.star.center = (self.width / 2, self.height)
+            anim = Animation(center_y=self.height / 2, duration=2) + Animation(center=(self.width / 2, self.height / 2), duration=2) + Animation(center_y=-50, duration=1)
+            anim.bind(on_complete=self.explode_star)
+            anim.start(self.star)
+
+    def explode_star(self, *args):
+        if self.star:
+            self.star.source = explosion_image_path
+            Clock.schedule_once(self.remove_star, 2)
+
+    def update_star_image(self, dt):
+        if self.star:
+            self.star.update_image()
+            Clock.schedule_once(self.remove_star, 0.5)
+
+    def remove_star(self, dt):
+        if self.star:
+            self.remove_widget(self.star)
+            self.star = None
+            self.swap_sides()
+
+    def swap_sides(self):
+        self.player1.x, self.player2.x = self.player2.x, self.player1.x
+        self.player1.center_y, self.player2.center_y = self.player2.center_y, self.player1.center_y
 
 class MainMenu(RelativeLayout):
     def __init__(self, **kwargs):
