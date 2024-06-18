@@ -151,14 +151,14 @@ class PongGame(Widget):
             self.star = RainbowStar()
             self.add_widget(self.star)
             self.star.center = (self.width / 2, self.height)
-            anim = Animation(center_y=self.height / 2, duration=2) + Animation(center=(self.width / 2, self.height / 2), duration=2) + Animation(center_y=-50, duration=1)
+            anim = Animation(center_y=self.height / 2, duration=2)
             anim.bind(on_complete=self.explode_star)
             anim.start(self.star)
 
     def explode_star(self, *args):
         if self.star:
             self.star.source = explosion_image_path
-            Clock.schedule_once(self.remove_star, 2)
+            Clock.schedule_once(self.remove_star, 1.7)
 
     def update_star_image(self, dt):
         if self.star:
