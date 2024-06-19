@@ -10,6 +10,7 @@ from kivy.vector import Vector
 from kivy.clock import Clock
 from kivy.animation import Animation
 from kivy.lang import Builder
+from kivy.core.text import LabelBase
 from kivy.properties import ListProperty
 from kivy.core.audio import SoundLoader
 from kivy.uix.slider import Slider
@@ -18,13 +19,15 @@ import os
 
 
 
+
 current_dir = os.path.dirname(os.path.realpath(__file__))
 
 star_image_path = os.path.join(current_dir, 'star.png').replace('\\', '/')
 explosion_image_path = os.path.join(current_dir, 'explosion.png').replace('\\', '/')
 bounce_sound_path = os.path.join(current_dir, 'bounce.mp3').replace('\\', '/')
-
+font_os_path = os.path.join(current_dir, 'pixel.ttf').replace('\\', '/')
 bounce_sound = SoundLoader.load(bounce_sound_path)
+LabelBase.register(name='Pixel', fn_regular=font_os_path)
 
 kv_string = f"""
 <Image>:
@@ -84,12 +87,14 @@ Builder.load_string(f'''
         id: player1_score_label
         text: str(root.user_score)
         font_size: 30
+        font_name: 'Pixel'
         center_x: root.width / 4
         top: root.top - 10
 
     Label:
         text: 'You'
         font_size: 20
+        font_name: 'Pixel'
         center_x: root.width / 4
         y: player1_score_label.y - player1_score_label.height
 
@@ -97,12 +102,14 @@ Builder.load_string(f'''
         id: player2_score_label
         text: str(root.player2.score)
         font_size: 30
+        font_name: 'Pixel'
         center_x: root.width * 3 / 4
         top: root.top - 10
 
     Label:
         text: 'Opponent'
         font_size: 20
+        font_name: 'Pixel'
         center_x: root.width * 3 / 4
         y: player2_score_label.y - player2_score_label.height
         
@@ -268,21 +275,21 @@ class PongGame(Widget):
 class MainMenu(RelativeLayout):
     def __init__(self, **kwargs):
         super(MainMenu, self).__init__(**kwargs)
-        self.label = Label(text='Hello the World', font_size=24, size_hint=(None, None), size=(300, 100),
+        self.label = Label(text='Hello the World', font_size=24, font_name='Pixel', size_hint=(None, None), size=(300, 100),
                            pos_hint={'center_x': 0.5, 'center_y': 0.7})
-        self.button = RainbowButton(text='World', size_hint=(None, None), size=(150, 40),
+        self.button = RainbowButton(text='World', font_name='Pixel', size_hint=(None, None), size=(150, 40),
                              pos_hint={'center_x': 0.5, 'center_y': 0.5})
         self.button.bind(on_press=self.start_game)
 
-        self.difficulty_label = Label(text='Difficulty', size_hint=(None, None), size=(150, 40),
-                                      pos_hint={'center_x': 0.5, 'center_y': 0.45})
+        self.difficulty_label = Label(text='Difficulty ', font_name='Pixel', size_hint=(None, None), size=(150, 40),
+                                      pos_hint={'center_x': 0.5, 'center_y': 0.437})
 
         self.difficulty_slider = Slider(min=1, max=3, value=2, step=1, size_hint=(None, None), size=(150, 40),
                                         pos_hint={'center_x': 0.5, 'center_y': 0.4})
 
         
-        self.easy_label = Label(text='Easy', size_hint=(None, None), size=(50, 40))
-        self.hard_label = Label(text='Hard', size_hint=(None, None), size=(50, 40))
+        self.easy_label = Label(text='Easy', font_name='Pixel', size_hint=(None, None), size=(50, 40))
+        self.hard_label = Label(text='Hard', font_name='Pixel', size_hint=(None, None), size=(50, 40))
 
         self.difficulty_slider.bind(pos=self.update_label_positions)
 
@@ -294,8 +301,8 @@ class MainMenu(RelativeLayout):
         self.add_widget(self.hard_label)
 
     def update_label_positions(self, instance, value):
-        self.easy_label.pos_hint = {'center_x': instance.x / instance.parent.width, 'center_y': 0.4}
-        self.hard_label.pos_hint = {'center_x': instance.right / instance.parent.width, 'center_y': 0.4}
+        self.easy_label.pos_hint = {'center_x': (instance.x - 17 ) / instance.parent.width, 'center_y': 0.4}
+        self.hard_label.pos_hint = {'center_x': (instance.right + 17 ) / instance.parent.width, 'center_y': 0.4}
 
     def start_game(self, instance):
         self.clear_widgets()
