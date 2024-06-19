@@ -11,9 +11,14 @@ from kivy.clock import Clock
 from kivy.animation import Animation
 from kivy.lang import Builder
 from kivy.properties import ListProperty
+from kivy.core.audio import SoundLoader
+from kivy.uix.slider import Slider
+
 
 star_image_path = "C:/Users/aesas/Desktop/app_test_2/star.png"
 explosion_image_path = "C:/Users/aesas/Desktop/app_test_2/explosion.png"
+bounce_sound_path = "C:/Users/aesas/Desktop/app_test_2/bounce.mp3"
+bounce_sound = SoundLoader.load(bounce_sound_path)
 
 Builder.load_string(f'''
 <PongBall>:
@@ -109,6 +114,9 @@ class PongPaddle(Widget):
             vel = bounced * 1.1
             ball.velocity = vel.x, vel.y + offset
 
+            bounce_sound.play()
+            Clock.schedule_once(lambda dt: bounce_sound.stop(), 1)
+
 class RainbowStar(Image):
     def __init__(self, **kwargs):
         super(RainbowStar, self).__init__(**kwargs)
@@ -164,10 +172,12 @@ class PongGame(Widget):
             self.player2_score.text = str(self.player2.score)
 
        
+        speeds = [dt * 100, dt * 300, dt * 600]
+        speed = speeds[int(self.parent.difficulty_slider.value) - 1]
         if self.ball.center_y > self.player2.center_y:
-            self.player2.center_y += min(self.ball.center_y - self.player2.center_y, 4)
+            self.player2.center_y += min(self.ball.center_y - self.player2.center_y, speed)
         if self.ball.center_y < self.player2.center_y:
-            self.player2.center_y -= min(self.player2.center_y - self.ball.center_y, 4)
+            self.player2.center_y -= min(self.player2.center_y - self.ball.center_y, speed)
 
     def on_touch_move(self, touch):
         if self.player1.x < self.width / 2:  
@@ -225,9 +235,38 @@ class MainMenu(RelativeLayout):
         self.button = Button(text='World', size_hint=(None, None), size=(150, 40),
                              pos_hint={'center_x': 0.5, 'center_y': 0.5})
         self.button.bind(on_press=self.start_game)
+
+        self.difficulty_label = Label(text='Difficulty', size_hint=(None, None), size=(150, 40),
+                                      pos_hint={'center_x': 0.5, 'center_y': 0.45})
+
+        self.difficulty_slider = Slider(min=1, max=3, value=2, step=1, size_hint=(None, None), size=(150, 40),
+                                        pos_hint={'center_x': 0.5, 'center_y': 0.4})
+
         
+        self.easy_label = Label(text='Easy', size_hint=(None, None), size=(50, 40))
+        self.hard_label = Label(text='Hard', size_hint=(None, None), size=(50, 40))
+
+        self.difficulty_slider.bind(pos=self.update_label_positions)
+
         self.add_widget(self.label)
         self.add_widget(self.button)
+        self.add_widget(self.difficulty_label)
+        self.add_widget(self.difficulty_slider)
+        self.add_widget(self.easy_label) 
+        self.add_widget(self.hard_label)
+
+    def update_label_positions(self, instance, value):
+        self.easy_label.pos_hint = {'center_x': instance.x / instance.parent.width, 'center_y': 0.4}
+        self.hard_label.pos_hint = {'center_x': instance.right / instance.parent.width, 'center_y': 0.4}
+
+    def start_game(self, instance):
+        self.clear_widgets()
+        self.game = PongGame()
+        self.game.player1.flash_color()
+        self.add_widget(self.game)
+        self.game.serve_ball()
+
+        Clock.schedule_interval(self.game.update, 1.0 / 60.0 / self.difficulty_slider.value)  
     
     def start_game(self, instance):
         self.clear_widgets()
@@ -235,7 +274,8 @@ class MainMenu(RelativeLayout):
         self.game.player1.flash_color()  
         self.add_widget(self.game)
         self.game.serve_ball()
-        Clock.schedule_interval(self.game.update, 1.0 / 60.0)
+        
+        Clock.schedule_interval(self.game.update, 1.0 / 60.0 / self.difficulty_slider.value)
 
 class PongApp(App):
     def build(self):
