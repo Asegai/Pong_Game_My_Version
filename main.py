@@ -14,7 +14,6 @@ from kivy.properties import ListProperty
 from kivy.core.audio import SoundLoader
 from kivy.uix.slider import Slider
 from kivy.graphics import Color, Line
-from kivy.uix.image import Image
 import os 
 
 
