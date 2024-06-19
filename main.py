@@ -13,13 +13,15 @@ from kivy.lang import Builder
 from kivy.properties import ListProperty
 from kivy.core.audio import SoundLoader
 from kivy.uix.slider import Slider
+from kivy.graphics import Color, Line
 import os 
+
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
 
-star_image_path = os.path.join(current_dir, "\\star.png")
-explosion_image_path = os.path.join(current_dir, "\\explosion.png")
-bounce_sound_path = os.path.join(current_dir, "\\bounce.mp3")
+star_image_path = r'C:\\Users\\aesas\Desktop\\app_test_2\\star.png'
+explosion_image_path = os.path.join(current_dir, r"C:\\Users\\aesas\\Desktop\\app_test_2\\explosion.png")
+bounce_sound_path = os.path.join(current_dir, r"C:\\Users\\aesas\\Desktop\\app_test_2\\bounce.mp3")
 bounce_sound = SoundLoader.load(bounce_sound_path)
 
 Builder.load_string(f'''
@@ -91,6 +93,26 @@ Builder.load_string(f'''
         y: player2_score_label.y - player2_score_label.height
         
 ''')
+
+class RainbowButton(Button):
+    outline_color = ListProperty([1, 1, 1, 1])
+
+    def __init__(self, **kwargs):
+        super(RainbowButton, self).__init__(**kwargs)
+        self.bind(pos=self.update_canvas, size=self.update_canvas)
+        self.flash_color()
+
+    def flash_color(self):
+        anim = Animation(outline_color=[1, 0, 0, 1]) + Animation(outline_color=[0, 1, 0, 1]) + Animation(outline_color=[0, 0, 1, 1])
+        anim.repeat = True
+        anim.start(self)
+
+    def update_canvas(self, *args):
+        self.canvas.before.clear()
+        with self.canvas.before:
+            Color(*self.outline_color)
+            Line(width=2, rectangle=(self.x, self.y, self.width, self.height))
+
 class PongBall(Widget):
     velocity_x = NumericProperty(0)
     velocity_y = NumericProperty(0)
@@ -234,7 +256,7 @@ class MainMenu(RelativeLayout):
         super(MainMenu, self).__init__(**kwargs)
         self.label = Label(text='Hello the World', font_size=24, size_hint=(None, None), size=(300, 100),
                            pos_hint={'center_x': 0.5, 'center_y': 0.7})
-        self.button = Button(text='World', size_hint=(None, None), size=(150, 40),
+        self.button = RainbowButton(text='World', size_hint=(None, None), size=(150, 40),
                              pos_hint={'center_x': 0.5, 'center_y': 0.5})
         self.button.bind(on_press=self.start_game)
 
