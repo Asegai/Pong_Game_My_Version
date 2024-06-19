@@ -99,7 +99,7 @@ class RainbowButton(Button):
 
     def __init__(self, **kwargs):
         super(RainbowButton, self).__init__(**kwargs)
-        self.bind(pos=self.update_canvas, size=self.update_canvas)
+        self.bind(pos=self.update_canvas, size=self.update_canvas, outline_color=self.update_canvas)
         self.flash_color()
 
     def flash_color(self):
