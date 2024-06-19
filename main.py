@@ -26,6 +26,8 @@ star_image_path = os.path.join(current_dir, 'star.png').replace('\\', '/')
 explosion_image_path = os.path.join(current_dir, 'explosion.png').replace('\\', '/')
 bounce_sound_path = os.path.join(current_dir, 'bounce.mp3').replace('\\', '/')
 font_os_path = os.path.join(current_dir, 'pixel.ttf').replace('\\', '/')
+game_music_path = os.path.join(current_dir, 'game_music.mp3').replace('\\', '/')
+main_menu_music_path = game_music_path #! temporary fix
 bounce_sound = SoundLoader.load(bounce_sound_path)
 LabelBase.register(name='Pixel', fn_regular=font_os_path)
 
@@ -173,6 +175,15 @@ class RainbowStar(Image):
             self.star_image = False
 
 class PongGame(Widget):
+
+    def __init__(self, **kwargs):
+            super(PongGame, self).__init__(**kwargs)
+            # Load and play the game music
+            self.music = SoundLoader.load(game_music_path)
+            if self.music:
+                self.music.loop = True
+                self.music.play()
+
     user_score = NumericProperty(0)
     ball = ObjectProperty(None)
     player1 = ObjectProperty(None)
@@ -275,6 +286,13 @@ class PongGame(Widget):
 class MainMenu(RelativeLayout):
     def __init__(self, **kwargs):
         super(MainMenu, self).__init__(**kwargs)
+
+        self.music = SoundLoader.load(main_menu_music_path)
+
+        if self.music:
+            self.music.loop = True
+            self.music.play()
+
         self.label = Label(text='Hello the World', font_size=24, font_name='Pixel', size_hint=(None, None), size=(300, 100),
                            pos_hint={'center_x': 0.5, 'center_y': 0.7})
         self.button = RainbowButton(text='World', font_name='Pixel', size_hint=(None, None), size=(150, 40),
@@ -314,6 +332,10 @@ class MainMenu(RelativeLayout):
         Clock.schedule_interval(self.game.update, 1.0 / 60.0 / self.difficulty_slider.value)  
     
     def start_game(self, instance):
+
+        if self.music:
+            self.music.stop()
+
         self.clear_widgets()
         self.game = PongGame()
         self.game.player1.flash_color()  
