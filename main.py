@@ -27,7 +27,7 @@ explosion_image_path = os.path.join(current_dir, 'explosion.png').replace('\\', 
 bounce_sound_path = os.path.join(current_dir, 'bounce.mp3').replace('\\', '/')
 font_os_path = os.path.join(current_dir, 'pixel.ttf').replace('\\', '/')
 game_music_path = os.path.join(current_dir, 'game_music.mp3').replace('\\', '/')
-main_menu_music_path = game_music_path #! temporary fix
+main_menu_music_path = os.path.join(current_dir, 'menu_music.mp3').replace('\\', '/')
 bounce_sound = SoundLoader.load(bounce_sound_path)
 LabelBase.register(name='Pixel', fn_regular=font_os_path)
 
