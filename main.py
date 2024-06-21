@@ -323,15 +323,6 @@ class MainMenu(RelativeLayout):
         self.hard_label.pos_hint = {'center_x': (instance.right + 17 ) / instance.parent.width, 'center_y': 0.4}
 
     def start_game(self, instance):
-        self.clear_widgets()
-        self.game = PongGame()
-        self.game.player1.flash_color()
-        self.add_widget(self.game)
-        self.game.serve_ball()
-
-        Clock.schedule_interval(self.game.update, 1.0 / 60.0 / self.difficulty_slider.value)  
-    
-    def start_game(self, instance):
 
         if self.music:
             self.music.stop()
