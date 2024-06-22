@@ -13,15 +13,16 @@ from kivy.lang import Builder
 from kivy.core.text import LabelBase
 from kivy.properties import ListProperty
 from kivy.core.audio import SoundLoader
+from kivy.core.window import Window
 from kivy.uix.slider import Slider
 from kivy.graphics import Color, Line
+from kivy.uix.textinput import TextInput
 import os 
+import sys
 
-
-
+#! Paths
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
-
 star_image_path = os.path.join(current_dir, 'star.png').replace('\\', '/')
 explosion_image_path = os.path.join(current_dir, 'explosion.png').replace('\\', '/')
 bounce_sound_path = os.path.join(current_dir, 'bounce.mp3').replace('\\', '/')
@@ -30,6 +31,8 @@ game_music_path = os.path.join(current_dir, 'game_music.mp3').replace('\\', '/')
 main_menu_music_path = os.path.join(current_dir, 'menu_music.mp3').replace('\\', '/')
 bounce_sound = SoundLoader.load(bounce_sound_path)
 LabelBase.register(name='Pixel', fn_regular=font_os_path)
+star_image = Image(source=star_image_path)
+explosion_image = Image(source=explosion_image_path)
 
 kv_string = f"""
 <Image>:
@@ -38,12 +41,8 @@ kv_string = f"""
 
 Builder.load_string(kv_string)
 
-star_image = Image(source=star_image_path)
-explosion_image = Image(source=explosion_image_path)
 
-
-
-Builder.load_string(f'''
+Builder.load_string(f''' #! lables and builder
 <PongBall>:
     size: 50, 50
     canvas:
@@ -117,7 +116,7 @@ Builder.load_string(f'''
         
 ''')
 
-class RainbowButton(Button):
+class RainbowButton(Button): #! Rainbow Button
     outline_color = ListProperty([1, 1, 1, 1])
 
     def __init__(self, **kwargs):
@@ -125,35 +124,35 @@ class RainbowButton(Button):
         self.bind(pos=self.update_canvas, size=self.update_canvas, outline_color=self.update_canvas)
         self.flash_color()
 
-    def flash_color(self):
+    def flash_color(self): #! Flash Color
         anim = Animation(outline_color=[1, 0, 0, 1]) + Animation(outline_color=[0, 1, 0, 1]) + Animation(outline_color=[0, 0, 1, 1])
         anim.repeat = True
         anim.start(self)
 
-    def update_canvas(self, *args):
+    def update_canvas(self, *args): #! Update Canvas
         self.canvas.before.clear()
         with self.canvas.before:
             Color(*self.outline_color)
             Line(width=2, rectangle=(self.x, self.y, self.width, self.height))
 
-class PongBall(Widget):
+class PongBall(Widget): #! Pong Ball
     velocity_x = NumericProperty(0)
     velocity_y = NumericProperty(0)
     velocity = ReferenceListProperty(velocity_x, velocity_y)
 
-    def move(self):
+    def move(self): #! Move
         self.pos = Vector(*self.velocity) + self.pos
 
-class PongPaddle(Widget):
+class PongPaddle(Widget): #! Pong Paddle
     score = NumericProperty(0)
     color = ListProperty([1, 1, 1, 1])
-    def flash_color(self):
+    def flash_color(self): #! Flash Color
         anim = Animation(color=[1, 0, 0, 1]) + Animation(color=[0, 1, 0, 1]) + Animation(color=[0, 0, 1, 1])
         anim.repeat = True
         anim.start(self)
 
 
-    def bounce_ball(self, ball):
+    def bounce_ball(self, ball): #! Bounce Ball
         if self.collide_widget(ball):
             vx, vy = ball.velocity
             offset = (ball.center_y - self.center_y) / (self.height / 2)
@@ -164,21 +163,21 @@ class PongPaddle(Widget):
             bounce_sound.play()
             Clock.schedule_once(lambda dt: bounce_sound.stop(), 1)
 
-class RainbowStar(Image):
+class RainbowStar(Image): #! Rainbow Star
     def __init__(self, **kwargs):
         super(RainbowStar, self).__init__(**kwargs)
         self.star_image = True
 
-    def update_image(self, *args):
+    def update_image(self, *args):  #! Update Image
         if self.star_image and self.center_y <= self.parent.height / 2:
             self.source = explosion_image_path
             self.star_image = False
 
-class PongGame(Widget):
+class PongGame(Widget): #! Pong Game
 
-    def __init__(self, **kwargs):
+    def __init__(self, play_till_score=0, **kwargs):
             super(PongGame, self).__init__(**kwargs)
-            # Load and play the game music
+            self.play_till_score = play_till_score
             self.music = SoundLoader.load(game_music_path)
             if self.music:
                 self.music.loop = True
@@ -192,13 +191,31 @@ class PongGame(Widget):
     player2_score = ObjectProperty(None)
     star = None
 
-    def serve_ball(self, vel=(4, 0)):
+    def serve_ball(self, vel=(4, 0)): #! Serve Ball
         self.ball.center = self.center
         self.ball.velocity = vel
 
-    def update(self, dt):
+    def end_game(self): #! End Game
+        thanks_label = Label(text="Thanks For Playing! \n\nExiting in 3 seconds...",
+                             font_name= 'Pixel',
+                             font_size='20sp',
+                             color=(1, 1, 1, 1), 
+                             size_hint=(None, None),
+                             pos=(Window.width / 2 - 200, Window.height / 2 - 25)) 
+
+        self.clear_widgets()
+        self.add_widget(thanks_label)
+        #! fix for game crash when exiting
+        Clock.unschedule(self.update)
+
+        Clock.schedule_once(lambda dt: sys.exit(), 3.5)
+
+    def update(self, dt): #! Update
         self.ball.move()
 
+        if self.play_till_score > 0:
+            if self.player1.score >= self.play_till_score or self.player2.score >= self.play_till_score:
+                self.end_game()
          
         self.player1.bounce_ball(self.ball)
         self.player2.bounce_ball(self.ball)
@@ -235,7 +252,7 @@ class PongGame(Widget):
         if self.ball.center_y < self.player2.center_y:
             self.player2.center_y -= min(self.player2.center_y - self.ball.center_y, speed)
 
-    def on_touch_move(self, touch):
+    def on_touch_move(self, touch): #! Touch Move
         if self.player1.x < self.width / 2:  
             if touch.x < self.width / 3:
                 self.player1.center_y = touch.y
@@ -243,11 +260,11 @@ class PongGame(Widget):
             if touch.x > self.width * 2 / 3:
                 self.player1.center_y = touch.y
 
-    def check_for_star(self):
+    def check_for_star(self): #! Check for Star
         if (self.player1.score + self.player2.score) % 5 == 0 and (self.player1.score >= 0 or self.player2.score >= 0):
             self.spawn_star()
 
-    def spawn_star(self):
+    def spawn_star(self): #! Spawn Star
         if not self.star:
             self.star = RainbowStar()
             self.add_widget(self.star)
@@ -256,23 +273,23 @@ class PongGame(Widget):
             anim.bind(on_complete=self.explode_star)
             anim.start(self.star)
 
-    def explode_star(self, *args):
+    def explode_star(self, *args): #! Explode Star
         if self.star:
             self.star.source = explosion_image_path
             Clock.schedule_once(self.remove_star, 1.7)
 
-    def update_star_image(self, dt):
+    def update_star_image(self, dt): #! Update Star Image
         if self.star:
             self.star.update_image()
             Clock.schedule_once(self.remove_star, 0.5)
 
-    def remove_star(self, dt):
+    def remove_star(self, dt): #! Remove Star
         if self.star:
             self.remove_widget(self.star)
             self.star = None
             self.swap_sides()
 
-    def swap_sides(self):
+    def swap_sides(self): #! Swap Sides
         self.player1.x, self.player2.x = self.player2.x, self.player1.x
         self.player1.center_y, self.player2.center_y = self.player2.center_y, self.player1.center_y
 
@@ -283,9 +300,17 @@ class PongGame(Widget):
         self.player1_score.text = str(self.player1.score)
         self.player2_score.text = str(self.player2.score)
 
-class MainMenu(RelativeLayout):
+class MainMenu(RelativeLayout): #! Main Menu
     def __init__(self, **kwargs):
         super(MainMenu, self).__init__(**kwargs)
+        self.play_till_input = TextInput(input_filter='int', font_name='Pixel',  size_hint=(0.2, 0.05), 
+                                         pos_hint={'center_x': 0.5, 'center_y': 0.35})
+
+        self.add_widget(self.play_till_input)
+        self.play_till_label = Label(text='Play Till Numeric Input Above', font_name='Pixel', size_hint=(None, None), size=(100, 40),
+                                            pos_hint={'center_x': 0.5, 'center_y': 0.3})
+        self.add_widget(self.play_till_label)
+
 
         self.music = SoundLoader.load(main_menu_music_path)
 
@@ -318,25 +343,23 @@ class MainMenu(RelativeLayout):
         self.add_widget(self.easy_label) 
         self.add_widget(self.hard_label)
 
-    def update_label_positions(self, instance, value):
+    def update_label_positions(self, instance, value): #! Update Label Positions
         self.easy_label.pos_hint = {'center_x': (instance.x - 17 ) / instance.parent.width, 'center_y': 0.4}
         self.hard_label.pos_hint = {'center_x': (instance.right + 17 ) / instance.parent.width, 'center_y': 0.4}
 
-    def start_game(self, instance):
+    def start_game(self, instance): #! Start Game
 
         if self.music:
             self.music.stop()
-
         self.clear_widgets()
-        self.game = PongGame()
-        self.game.player1.flash_color()  
+        play_till_score = int(self.play_till_input.text) if self.play_till_input.text.isdigit() else 5
+        self.game = PongGame(play_till_score=play_till_score)
+        self.game.player1.flash_color()
         self.add_widget(self.game)
         self.game.serve_ball()
-        
         Clock.schedule_interval(self.game.update, 1.0 / 60.0 / self.difficulty_slider.value)
-
-class PongApp(App):
-    def build(self):
+class PongApp(App): #! Pong App
+    def build(self): #! Build
         return MainMenu()
 
 if __name__ == '__main__':
